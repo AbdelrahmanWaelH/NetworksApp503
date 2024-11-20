@@ -74,7 +74,15 @@ app.get('/registration', (req, res) => {
 });
 
 app.get('/home', (req, res) => {
-    res.render('home.ejs'); // Render a home page (e.g., home.ejs)
+    if (!req.session.user) {
+        return res.redirect('/login'); // Redirect to login if no session user
+    }
+    res.render('home.ejs'); // Render home page if session user exists
+});
+
+// non-existing paths should be redirected to 404
+app.use((req, res, next) => {
+    res.status(404).render('404.ejs');
 });
 
 //POST METHODS
