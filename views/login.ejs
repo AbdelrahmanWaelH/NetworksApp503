@@ -3,21 +3,56 @@
 <head>
     <style>
         body {
-            background-image: url("background1.jpg");
+            background-image: url("/background1.jpg");
             background-repeat: no-repeat;
-            background-size: 100%;
+            background-size: cover;
+            height: 100vh;
         }
+
         h1 {
             color: white;
             text-align: center;
             -webkit-text-stroke: 1px black;
+            margin-top: 20px;
         }
-        .cont {
-            position:relative;
-            left:600px;
-            top:50px;
+
+        .login-container {
+            background-color: rgba(0, 0, 0, 0.6);
+            padding: 30px;
+            border-radius: 8px;
             color: white;
+            box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.5);
+            width: 350px;
+            margin: 50px auto;
         }
+
+        .form-control {
+            border-radius: 5px;
+        }
+
+        .btn-primary {
+            width: 100%;
+        }
+
+        .link {
+            color: #f8f9fa;
+        }
+
+        .link:hover {
+            color: #ccc;
+        }
+
+
+        .alert-container {
+            position: fixed;
+            top: 10px;
+            right: 10px; /* Adjusted to position at the top-right */
+            z-index: 1050;
+            width: 90%;
+            max-width: 400px;
+            transform: none; /* Removed center alignment */
+        }
+
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -26,23 +61,112 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
-
 <body>
     <div class="container">
         <h1>Welcome</h1>
     </div>
-    <div class="cont">
-        <form method="POST">
-            Username:<br>
-            <input type="text" name="username">
-            <br>
-            Password:<br>
-            <input type="password" name="password">
-            <br><br>
-            <input type="submit" value="Login">
+
+    <div class="alert-container"></div>
+
+    <div class="login-container">
+        <form id="loginForm" method="POST" action="/">
+            <div class="form-group">
+                <label for="username">Username:</label>
+                <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <div class="input-group">
+                    <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required>
+                    <div class="input-group-append">
+                        <button class="btn btn-outline-secondary" type="button" id="togglePassword">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Login</button>
         </form>
         <br>
-        <a href="registration">I dont have an account</a>
+        <div class="text-center">
+            <a href="registration" class="link">I don’t have an account</a>
+        </div>
     </div>
+
+    <script src="https://kit.fontawesome.com/f3704ee0ad.js" crossorigin="anonymous"></script>
+    <script>
+        document.getElementById('togglePassword').addEventListener('click', function () {
+            const passwordField = document.getElementById('password');
+            const type = passwordField.type === 'password' ? 'text' : 'password';
+            passwordField.type = type;
+
+            // Toggle the eye icon to hide or show password
+            const eyeIcon = this.querySelector('i');
+            if (type === 'password') {
+                eyeIcon.classList.remove('fa-eye-slash');
+                eyeIcon.classList.add('fa-eye');
+            } else {
+                eyeIcon.classList.remove('fa-eye');
+                eyeIcon.classList.add('fa-eye-slash');
+            }
+        });
+
+        // Handle form submission with AJAX
+        document.getElementById('loginForm').addEventListener('submit', async function (event) {
+            event.preventDefault(); // Prevent the default form submission
+
+            const formData = new FormData(this);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const response = await fetch(this.action, {
+                    method: this.method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    showBootstrapAlert(result.message || "User Login Ok!", "success");
+                    setTimeout(() => {
+                        window.location.href = "/home"; // Change "/home" to your desired page
+                    }, 1000); // Add a slight delay to let the alert display
+                } else {
+                    showBootstrapAlert(result.error || "An unknown error occurred.", "danger");
+                }
+            } catch (error) {
+                console.error(error);
+                showBootstrapAlert("Failed to connect to the server. Please try again later.", "danger");
+            }
+        });
+
+        function showBootstrapAlert(message, type = "danger") {
+            const alertContainer = document.querySelector('.alert-container');
+            const alert = document.createElement('div');
+            alert.className = `alert alert-${type} alert-dismissible fade show`;
+            alert.role = "alert";
+            alert.innerHTML = `
+                ${message}
+            `;
+            alertContainer.appendChild(alert);
+
+            // Automatically remove the alert after 3 seconds
+            setTimeout(() => {
+                alert.classList.remove('show');
+                alert.addEventListener('transitionend', () => alert.remove());
+            }, 3000);
+        }
+    </script>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
+        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"
+        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGaHwjlrn5q6autNgzueT8rWxE"
+        crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"
+        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIyPi6jWt+EqU0ODcChtphKTPnkPxLVJ5BoFIa7H"
+        crossorigin="anonymous"></script>
 </body>
 </html>
