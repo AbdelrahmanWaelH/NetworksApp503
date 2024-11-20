@@ -80,49 +80,54 @@ app.get('/home', (req, res) => {
 //POST METHODS
 // Login Route (POST method to check credentials)
 app.post(['/', '/login'], async (req, res) => {
-    const {username,password} = req.body;
+    const {username, password} = req.body;
     let allowLogin = false;
+
     if (!username || !password) {
         return res.status(400).json({error: "Username and password are required."});
     }
 
-    if (username == 'admin' && password == 'admin') {
+    if (username === 'admin' && password === 'admin') {
         allowLogin = true;
     }
 
     try {
         await connectDb();
+        
         if (!allowLogin) {
             // Check if the user exists in the database
             const user = await usersCollection.findOne({
                 username
             });
+
             if (!user) {
-                return res.status(401).json({error: "User does not Exist"});
+                return res.status(401).json({error: "User does not exist"});
             }
 
             // Compare the entered password with the stored hashed password
             const isMatch = await bcrypt.compare(password, user.password);
+
             if (!isMatch) {
                 return res.status(401).json({error: "Invalid credentials."});
             }
 
-            res.status(200).json({ message:"Login successful!"});
             // Store user information in the session
             req.session.user = {
                 username: user.username
             };
 
+            return res.status(200).json({ message: "Login successful!"});  // Only one response here
         }
-        if (allowLogin){
-            req.session.user = {
-                username: 'admin'
-            };
-        }
-        return res.status(200).json({ message: "login successful!" });
+        
+        // If allowLogin is true (admin login)
+        req.session.user = {
+            username: 'admin'
+        };
+
+        return res.status(200).json({ message: "Login successful!"});  // Only one response here
     } catch (err) {
         console.error(err);
-        res.status(500).json({error: "Error logging in."});
+        return res.status(500).json({error: "Error logging in."});
     }
 });
 
@@ -134,6 +139,7 @@ app.post('/registration', async (req, res) => {
     if (!username || !password) {
         return res.status(400).json({error: "Username and password are required."});
     }
+
     await connectDb();
     const user = await usersCollection.findOne({
         username

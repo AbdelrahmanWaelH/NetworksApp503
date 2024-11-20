@@ -68,7 +68,7 @@
     <div class="alert-container"></div>
 
     <div class="login-container">
-        <form method="POST">
+        <form id="registrationForm">
             <div class="form-group">
                 <label for="username">Username:</label>
                 <input type="text" class="form-control" id="username" name="username" placeholder="Enter your username" required>
@@ -90,11 +90,11 @@
         <div class="text-center">
             <a href="login" class="link">I already have an account</a>
         </div>
-
     </div>
 
     <script src="https://kit.fontawesome.com/f3704ee0ad.js" crossorigin="anonymous"></script>
-        <script>
+    <script>
+        // Toggle password visibility
         document.getElementById('togglePassword').addEventListener('click', function () {
             const passwordField = document.getElementById('password');
             const type = passwordField.type === 'password' ? 'text' : 'password';
@@ -110,16 +110,17 @@
                 eyeIcon.classList.add('fa-eye-slash');
             }
         });
+
         // Handle form submission with AJAX
-        document.getElementById('loginForm').addEventListener('submit', async function (event) {
+        document.getElementById('registrationForm').addEventListener('submit', async function (event) {
             event.preventDefault(); // Prevent the default form submission
 
             const formData = new FormData(this);
             const data = Object.fromEntries(formData.entries());
 
             try {
-                const response = await fetch(this.action, {
-                    method: this.method,
+                const response = await fetch('/registration', {
+                    method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data)
                 });
@@ -127,11 +128,10 @@
                 const result = await response.json();
 
                 if (response.ok) {
-                    showBootstrapAlert(result.message || "Registration Ok!", "success");
+                    showBootstrapAlert(result.message || "Registration successful!", "success");
                     setTimeout(() => {
-                        window.location.href = "/login"; // Change "/home" to your desired page
+                        window.location.href = "/login"; // Redirect to login after success
                     }, 1000); // Add a slight delay to let the alert display
-
                 } else {
                     showBootstrapAlert(result.error || "An unknown error occurred.", "danger");
                 }
@@ -141,6 +141,7 @@
             }
         });
 
+        // Function to show Bootstrap alert
         function showBootstrapAlert(message, type = "danger") {
             const alertContainer = document.querySelector('.alert-container');
             const alert = document.createElement('div');
