@@ -99,8 +99,6 @@ app.post(['/', '/login'], async (req, res) => {
 
     try {
         await connectDb();
-        console.log(usersCollection)
-
         if (!allowLogin) {
             // Check if the user exists in the database
             const user = await usersCollection.findOne({
