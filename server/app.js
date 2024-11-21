@@ -80,17 +80,15 @@ app.get('/home', (req, res) => {
     res.render('home.ejs'); // Render home page if session user exists
 });
 
-// non-existing paths should be redirected to 404
-app.use((req, res, next) => {
-    res.status(404).render('404.ejs');
-});
-
+app.get('*', (req, res) => {
+  res.status(404).render('404', { url: req.originalUrl });
+ });
 //POST METHODS
 // Login Route (POST method to check credentials)
 app.post(['/', '/login'], async (req, res) => {
     const {username, password} = req.body;
     let allowLogin = false;
-
+    console.log(username)
     if (!username || !password) {
         return res.status(400).json({error: "Username and password are required."});
     }
@@ -101,7 +99,8 @@ app.post(['/', '/login'], async (req, res) => {
 
     try {
         await connectDb();
-        
+        console.log(usersCollection)
+
         if (!allowLogin) {
             // Check if the user exists in the database
             const user = await usersCollection.findOne({
@@ -147,8 +146,8 @@ app.post('/registration', async (req, res) => {
     if (!username || !password) {
         return res.status(400).json({error: "Username and password are required."});
     }
-
     await connectDb();
+    
     const user = await usersCollection.findOne({
         username
     });
