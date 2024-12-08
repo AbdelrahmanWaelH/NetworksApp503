@@ -45,13 +45,19 @@
 
         .alert-container {
             position: fixed;
-            top: 10px;
-            right: 10px; /* Adjusted to position at the top-right */
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
             z-index: 1050;
-            width: 90%;
+            width: auto;
             max-width: 400px;
-            transform: none; /* Removed center alignment */
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Space between multiple alerts */
+            align-items: center; /* Center align content */
+            text-align: center; /* Center align text inside alerts */
         }
+
 
     </style>
     <meta charset="UTF-8">
@@ -143,12 +149,16 @@
 
         function showBootstrapAlert(message, type = "danger") {
             const alertContainer = document.querySelector('.alert-container');
+            
+            // Create the alert element
             const alert = document.createElement('div');
             alert.className = `alert alert-${type} alert-dismissible fade show`;
             alert.role = "alert";
             alert.innerHTML = `
-                ${message}
+                <strong>${type.charAt(0).toUpperCase() + type.slice(1)}!</strong> ${message}
             `;
+
+            // Append the alert to the container
             alertContainer.appendChild(alert);
 
             // Automatically remove the alert after 3 seconds
@@ -157,6 +167,8 @@
                 alert.addEventListener('transitionend', () => alert.remove());
             }, 3000);
         }
+
+
     </script>
 
     <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"

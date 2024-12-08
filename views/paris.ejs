@@ -40,6 +40,23 @@
             left: 30px;
             top: 470px;
         }
+
+        .alert-container {
+            position: fixed;
+            top: 40%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            z-index: 1050;
+            width: auto;
+            max-width: 400px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px; /* Space between multiple alerts */
+            align-items: center; /* Center align content */
+            text-align: center; /* Center align text inside alerts */
+        }
+
+
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -72,13 +89,68 @@
     <div class="container2">
         <%= description %>
     </div>
-    <div class="wanttogo">
-        <button id="wanttogo" class="btn btn-secondary ml-3">Add to Want-to-Go List</button>
-    </div>
+        <button class="btn btn-success add-to-list" data-destination="<%= name %>">Add to Want-to-Go List</button>
+    
     <div class="video">
         <iframe width="480" height="360" src="<%= videoUrl %>" 
                 title="<%= name %> Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
         </iframe>                   
     </div>
+
+    <div class="alert-container"></div>
+
+
+
+    <script>
+          document.querySelectorAll('.add-to-list').forEach(button => {
+            button.addEventListener('click', async (event) => {
+            const destinationName = event.target.dataset.destination;
+
+            try {
+                const response = await fetch('/add-to-want-to-go', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ destinationName }),
+                });
+
+                if (response.ok) {
+                    showBootstrapAlert("Destination added to your Want-to-Go List!", "success");
+                } else {
+                    const errorData = await response.json();
+                    showBootstrapAlert(errorData.error || "Failed to add destination.", "danger");
+                }
+            } catch (error) {
+                console.error("Error adding to Want-to-Go List:", error);
+                showBootstrapAlert("Error adding to Want-to-Go List.", "danger");
+            }
+        });
+    });
+
+    function showBootstrapAlert(message, type = "danger") {
+        const alertContainer = document.querySelector('.alert-container');
+        
+        // Create the alert element
+        const alert = document.createElement('div');
+        alert.className = `alert alert-${type} alert-dismissible fade show`;
+        alert.role = "alert";
+        alert.innerHTML = `
+            <strong>${type.charAt(0).toUpperCase() + type.slice(1)}!</strong> ${message}
+        `;
+
+        // Append the alert to the container
+        alertContainer.appendChild(alert);
+
+        // Automatically remove the alert after 3 seconds
+        setTimeout(() => {
+            alert.classList.remove('show');
+            alert.addEventListener('transitionend', () => alert.remove());
+        }, 3000);
+    }
+
+
+    </script>
+    
 </body>
 </html>

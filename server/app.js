@@ -22,7 +22,7 @@ const destinationPages = {
     "Inca": "inca.ejs",
     "Paris": "paris.ejs",
     "Annapurna": "annapurna.ejs",
-    "Roma": "roma.ejs",
+    "Rome": "rome.ejs",
     "Santorini": "santorini.ejs"
 };
 
@@ -348,6 +348,40 @@ app.get('/hiking', async (req, res) => {
 
 
 
+app.post('/add-to-want-to-go', async (req, res) => {
+    const { destinationName } = req.body;
+    console.log(`add to list has been clicked for ${destinationName}`); 
+    if (!req.session.user) {
+        return res.status(401).json({ error: "User not logged in." });
+    }
+
+    try {
+        await connectDb();
+
+        // Find the logged-in user
+        const user = await usersCollection.findOne({ username: req.session.user.username });
+
+        if (!user) {
+            return res.status(404).json({ error: "User not found." });
+        }
+
+        // Check if the destination is already in the list
+        if (user.wantToGoList.includes(destinationName)) {
+            return res.status(400).json({ error: "Destination already in Want-to-Go List." });
+        }
+
+        // Add the destination to the list
+        await usersCollection.updateOne(
+            { username: req.session.user.username },
+            { $push: { wantToGoList: destinationName } }
+        );
+
+        res.status(200).json({ message: "Destination added to Want-to-Go List." });
+    } catch (err) {
+        console.error("Error updating Want-to-Go List:", err);
+        res.status(500).json({ error: "Error updating Want-to-Go List." });
+    }
+});
 
 
 

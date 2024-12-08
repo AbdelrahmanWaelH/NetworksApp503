@@ -156,6 +156,11 @@ form.addEventListener("submit", async (e) => {
                             <form method="GET" id='searchForm' action='/${destination.name}' class="form-inline my-2 my-lg-0">
                                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">find more about ${destination.name}</button>
                             </form>
+                         <form method="POST" id="addToListButton" action="/add-to-want-to-go" class="add-to-list form-inline my-2 my-lg-0">
+                            <input type="hidden" name="destinationName" value="${destination.name}">
+                            <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Add to Want-to-Go List</button>
+                        </form>
+
                         </div>
                     </div>
                 </div>
