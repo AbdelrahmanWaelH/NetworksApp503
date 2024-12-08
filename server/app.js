@@ -214,16 +214,146 @@ app.post('/search', async(req,res)=>{
 
 });
 
-for (destination in destinationPages) {
-    app.post(`/${destination}`, async(req, res)=>{      //method used is POST because GET wouldnt work for some reason
+// for (destinationName in destinationPages) {
+//     app.post(`/${destinationName}`, async(req, res)=>{      //method used is POST because GET wouldnt work for some reason
+//         if (!req.session.user) {
+//             return res.redirect('/login'); // Redirect to login if no session user
+//         }
+//  try {
+//         // Connect to the database
+//         await connectDb();
+
+//         // Fetch destination data from the database
+//         const destination = await usersCollection.findOne({
+//             type: "destination",
+//             name: destinationName.toLowerCase()
+//         });
+
+//         if (!destination) {
+//             return res.status(404).render('404', { url: req.originalUrl });
+//         }
+
+//         // Render the destination page with dynamic data
+//         res.render(destination.template, {
+//             videoUrl: destination.videoUrl,
+//             description: destination.description,
+//             image: destination.image,
+//             name: destination.name
+//         });
+//     } catch (err) {
+//         console.error("Error fetching destination:", err);
+//         res.status(500).send("Error loading the page.");
+//     }    });
+// }
+
+// Start the server on the port you need , specifically 3000 for simplicity
+
+for (let destinationName in destinationPages) {
+    app.post(`/${destinationName}`, async (req, res) => {
         if (!req.session.user) {
             return res.redirect('/login'); // Redirect to login if no session user
         }
-        res.render(destinationPages[destination]);
+
+        try {
+            console.log("Requested destination:", destinationName);
+
+            // Connect to the database
+            await connectDb();
+
+            // Query the database
+            const destination = await usersCollection.findOne({
+                type: "destination",
+                name: destinationName // Normalize to lowercase
+            });
+
+            console.log("Query result:", destination);
+
+            if (!destination) {
+                return res.status(404).render('404', { url: req.originalUrl });
+            }
+
+            if (!destination.template) {
+                console.error("Missing template for destination:", destinationName);
+                return res.status(500).send("Template not defined for this destination.");
+            }
+
+            // Render the EJS template with dynamic data
+            res.render(destination.template, {
+                videoUrl: destination.videoUrl,
+                description: destination.description,
+                image: destination.image,
+                name: destination.name
+            });
+        } catch (err) {
+            console.error("Error fetching destination:", err);
+            res.status(500).send("Error loading the page.");
+        }
     });
 }
 
-// Start the server on the port you need , specifically 3000 for simplicity
 app.listen(3000, () => {
     console.log('Server started on port 3000');
 });
+
+
+//database data:
+/* 
+[
+  {
+    "type": "destination",
+    "name": "Santorini",
+    "template": "santorini.ejs",
+    "description": "A Greek island famous for its whitewashed buildings, blue domes, and stunning sunsets.",
+    "image": "/santorini.png",
+    "videoUrl": "https://www.youtube.com/embed/4zAEDLwl9HI",
+    "destinationType": "Island"
+  },
+  {
+    "type": "destination",
+    "name": "Roma",
+    "template": "roma.ejs",
+    "description": "The Eternal City, known for its ancient ruins like the Colosseum and rich cultural heritage.",
+    "image": "/roma.png",
+    "videoUrl": "https://www.youtube.com/embed/hNaQ8jq_3zM",
+    "destinationType": "City"
+  },
+  {
+    "type": "destination",
+    "name": "Annapurna",
+    "template": "annapurna.ejs",
+    "description": "A breathtaking Himalayan mountain range, offering some of the world's most iconic trekking routes.",
+    "image": "/annapurna.png",
+    "videoUrl": "https://www.youtube.com/embed/qBgkuiqPK0I",
+    "destinationType": "Hiking"
+  },
+  {
+    "type": "destination",
+    "name": "Paris",
+    "template": "paris.ejs",
+    "description": "The city of lights, famous for its art, architecture, and iconic landmarks like the Eiffel Tower.",
+    "image": "/paris.png",
+    "videoUrl": "https://www.youtube.com/embed/wroGPb4-3yM",
+    "destinationType": "City"
+  },
+  {
+    "type": "destination",
+    "name": "Inca",
+    "template": "inca.ejs",
+    "description": "Home to Machu Picchu, the ancient city of the Inca Empire located in the Andes mountains.",
+    "image": "/inca.png",
+    "videoUrl": "https://www.youtube.com/embed/oZ90M55mDac",
+    "destinationType": "Hiking"
+  },
+  {
+    "type": "destination",
+    "name": "Bali",
+    "template": "bali.ejs",
+    "description": "A tropical paradise known for its lush greenery, serene beaches, and vibrant culture.",
+    "image": "/bali.png",
+    "videoUrl": "https://www.youtube.com/embed/tZIRwYeEGnc",
+    "destinationType": "Island"
+  }
+]
+
+
+*/

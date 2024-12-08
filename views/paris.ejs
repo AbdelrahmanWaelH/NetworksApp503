@@ -7,7 +7,6 @@
             background-repeat: no-repeat;
             background-size: 100%;
         }
-
         h1 {
             color: white;
             text-align: center;
@@ -33,30 +32,26 @@
             left: 700px;
             top: 150px;
             color: white;
-            width: 300px;
-            text-align: justify;
-            text-justify: inter-word;
+            width: 480px;
+            height: 360px;
         }
         .wanttogo {
             position: fixed;
             left: 30px;
             top: 470px;
         }
-        #my {
-            zoom: 110%;
-        }
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Paris</title>
+    <title><%= name %></title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
 </head>
 
 <body>
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-2">
-        <a class="navbar-brand" style="color: rgb(191, 255, 161)">Paris</a>
+        <a class="navbar-brand" style="color: rgb(191, 255, 161)"><%= name %></a>
         <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
             aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
@@ -72,20 +67,18 @@
         </div>
     </nav>
     <div class="container1">
-        <img id="image" src="/paris.png" width="193" height="300">
+        <img id="image" src="<%= image %>" width="193" height="300">
     </div>
     <div class="container2">
-        It is known as the most romantic city in the world, and is home to some world famous sights that are constantly shown in travel magazines, movies, and other works of art. Paris, the capital of France, has a population of over two million people and is one of Europe's most-visited cities.
+        <%= description %>
     </div>
     <div class="wanttogo">
         <button id="wanttogo" class="btn btn-secondary ml-3">Add to Want-to-Go List</button>
     </div>
     <div class="video">
-        <video width="480" height="360" controls>
-            <source src="/paris.mp4">
-        </video>
+        <iframe width="480" height="360" src="<%= videoUrl %>" 
+                title="<%= name %> Video" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen>
+        </iframe>                   
     </div>
-
 </body>
-
 </html>
