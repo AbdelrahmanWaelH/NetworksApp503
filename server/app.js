@@ -96,9 +96,7 @@ app.get('/home', (req, res) => {
     res.render('home.ejs'); // Render home page if session user exists
 });
 
-app.get('*', (req, res) => {
-  res.status(404).render('404', { url: req.originalUrl });
- });
+
 //POST METHODS
 // Login Route (POST method to check credentials)
 app.post(['/', '/login'], async (req, res) => {
@@ -214,6 +212,7 @@ app.post('/search', async(req,res)=>{
 
 });
 
+
 // for (destinationName in destinationPages) {
 //     app.post(`/${destinationName}`, async(req, res)=>{      //method used is POST because GET wouldnt work for some reason
 //         if (!req.session.user) {
@@ -253,7 +252,6 @@ for (let destinationName in destinationPages) {
         if (!req.session.user) {
             return res.redirect('/login'); // Redirect to login if no session user
         }
-
         try {
             console.log("Requested destination:", destinationName);
 
@@ -290,6 +288,28 @@ for (let destinationName in destinationPages) {
         }
     });
 }
+
+app.get('/hiking', async (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login');
+    }
+    res.render('hiking.ejs');
+});
+
+app.get('/cities', async (req, res) =>{
+    if (!req.session.user) {
+        return res.redirect('/login'); // Redirect to login if no session user
+    }
+    res.render('cities.ejs');
+});
+
+app.get('/islands', async (req, res) =>{
+    if (!req.session.user) {
+        return res.redirect('/login'); // Redirect to login if no session user
+    }
+    res.render('islands.ejs');
+});
+
 
 app.listen(3000, () => {
     console.log('Server started on port 3000');
@@ -357,3 +377,8 @@ app.listen(3000, () => {
 
 
 */
+
+
+app.get('*', (req, res) => {
+    res.status(404).render('404', { url: req.originalUrl });
+   });
