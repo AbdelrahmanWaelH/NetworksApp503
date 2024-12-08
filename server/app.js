@@ -255,26 +255,95 @@ for (let destinationName in destinationPages) {
     });
 }
 
+
+app.get('/cities', async (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login'); // Redirect to login if no session user
+    }
+
+    try {
+        await connectDb();
+
+        const type = "City"
+        // Fetch destinations of the given type
+        const destinations = await usersCollection.find({
+            type: "destination",
+            destinationType:type  // Match the type, e.g., "islands", "hiking"
+        }).toArray();
+
+        if (destinations.length === 0) {
+            return res.status(404).send("No destinations found for this type.");
+        }
+
+        // Render the EJS template with the fetched data
+        res.render('Cities', { destinations, type });
+    } catch (err) {
+        console.error("Error fetching destinations:", err);
+        res.status(500).send("Error loading destinations.");
+    }
+});
+
+
+
+
+app.get('/islands', async (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login'); // Redirect to login if no session user
+    }
+
+    try {
+        await connectDb();
+
+        const type = "Island"
+        // Fetch destinations of the given type
+        const destinations = await usersCollection.find({
+            type: "destination",
+            destinationType:type  // Match the type, e.g., "islands", "hiking"
+        }).toArray();
+
+        if (destinations.length === 0) {
+            return res.status(404).send("No destinations found for this type.");
+        }
+
+        // Render the EJS template with the fetched data
+        res.render('Islands', { destinations, type });
+    } catch (err) {
+        console.error("Error fetching destinations:", err);
+        res.status(500).send("Error loading destinations.");
+    }
+});
+
+
+
+
 app.get('/hiking', async (req, res) => {
     if (!req.session.user) {
-        return res.redirect('/login');
-    }
-    res.render('hiking.ejs');
-});
-
-app.get('/cities', async (req, res) =>{
-    if (!req.session.user) {
         return res.redirect('/login'); // Redirect to login if no session user
     }
-    res.render('cities.ejs');
+
+    try {
+        await connectDb();
+
+        const type = "Hiking"
+        // Fetch destinations of the given type
+        const destinations = await usersCollection.find({
+            type: "destination",
+            destinationType:type  // Match the type, e.g., "islands", "hiking"
+        }).toArray();
+
+        if (destinations.length === 0) {
+            return res.status(404).send("No destinations found for this type.");
+        }
+
+        // Render the EJS template with the fetched data
+        res.render('Hiking', { destinations, type });
+    } catch (err) {
+        console.error("Error fetching destinations:", err);
+        res.status(500).send("Error loading destinations.");
+    }
 });
 
-app.get('/islands', async (req, res) =>{
-    if (!req.session.user) {
-        return res.redirect('/login'); // Redirect to login if no session user
-    }
-    res.render('islands.ejs');
-});
+
 
 
 app.listen(3000, () => {
