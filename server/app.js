@@ -8,10 +8,22 @@ const session = require('express-session');
 require('dotenv').config({
     path: '../.env'
 }); // This points to the .env in the root folder
+app.set('case sensitive routing', false);
+
 
 // setup for .env file for base Url for mongodb
 const uri = "mongodb://localhost:27017/";
 const key = "6UfZN0VdbW9A9U2ioUtHVRVjmYOPoMTA";
+
+const destinationPages = {
+    "Bali": "bali.ejs",
+    "Inca": "inca.ejs",
+    "Paris": "paris.ejs",
+    "Annapurna": "annapurna.ejs",
+    "Roma": "roma.ejs",
+    "Santorini": "santorini.ejs"
+};
+
 
 console.log('MongoDB URI:', uri);
 
@@ -178,7 +190,7 @@ app.post('/registration', async (req, res) => {
 app.post('/search', async(req,res)=>{
     const {searchKey} = req.body;
     if (!searchKey )         
-        return res.status(400).json({ error: "Username and password are required." });
+        return res.status(400).json({ error: "Search key is required." });
     try{
         await connectDb();
 
@@ -201,6 +213,15 @@ app.post('/search', async(req,res)=>{
     }
 
 });
+
+for (destination in destinationPages) {
+    app.post(`/${destination}`, async(req, res)=>{      //method used is POST because GET wouldnt work for some reason
+        if (!req.session.user) {
+            return res.redirect('/login'); // Redirect to login if no session user
+        }
+        res.render(destinationPages[destination]);
+    });
+}
 
 // Start the server on the port you need , specifically 3000 for simplicity
 app.listen(3000, () => {
