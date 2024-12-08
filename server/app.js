@@ -14,12 +14,8 @@ app.set('case sensitive routing', false);
 // setup for .env file for base Url for mongodb
 
 
-// const uri2 = "mongodb://localhost:27017/";
-// const key2 = "6UfZN0VdbW9A9U2ioUtHVRVjmYOPoMTA";
-
-const uri = process.env.MONGODB_URI;
-const key = process.env.SECURE_KEY;
-
+const uri = "mongodb://localhost:27017/";
+const key = "6UfZN0VdbW9A9U2ioUtHVRVjmYOPoMTA";
 
 const destinationPages = {
     "Bali": "bali.ejs",
