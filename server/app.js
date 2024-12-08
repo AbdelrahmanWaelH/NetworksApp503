@@ -61,6 +61,14 @@ async function connectDb() {
     usersCollection = db.collection(collectionName);
 }
 
+//check if the session has a user and redirect if not 
+async function checkLogin(){
+    if (!req.session.user) {
+        return res.redirect('/login'); // Redirect to login if no session user
+    }
+}
+
+
 // Setup Express middleware to parse JSON request bodies
 app.use(express.json());
 app.use(express.urlencoded({
@@ -91,13 +99,10 @@ app.get('/registration', (req, res) => {
     res.render('registration.ejs');
 });
 
-app.get('/home', (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login'); // Redirect to login if no session user
-    }
+app.get('/home', async (req, res) => {
+    await checkLogin();
     res.render('home.ejs'); // Render home page if session user exists
 });
-
 
 //POST METHODS
 // Login Route (POST method to check credentials)
@@ -217,9 +222,7 @@ app.post('/search', async(req,res)=>{
 
 for (let destinationName in destinationPages) {
     app.get(`/${destinationName}`, async (req, res) => {
-        if (!req.session.user) {
-            return res.redirect('/login'); // Redirect to login if no session user
-        }
+        await checkLogin();
         try {
             console.log("Requested destination:", destinationName);
 
@@ -259,10 +262,7 @@ for (let destinationName in destinationPages) {
 
 
 app.get('/cities', async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login'); // Redirect to login if no session user
-    }
-
+    await checkLogin();
     try {
         await connectDb();
 
@@ -289,10 +289,7 @@ app.get('/cities', async (req, res) => {
 
 
 app.get('/islands', async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login'); // Redirect to login if no session user
-    }
-
+    await checkLogin();
     try {
         await connectDb();
 
@@ -316,13 +313,8 @@ app.get('/islands', async (req, res) => {
 });
 
 
-
-
 app.get('/hiking', async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login'); // Redirect to login if no session user
-    }
-
+    await checkLogin();
     try {
         await connectDb();
 
@@ -344,14 +336,6 @@ app.get('/hiking', async (req, res) => {
         res.status(500).send("Error loading destinations.");
     }
 });
-
-
-
-
-
-
-
-
 
 app.listen(3000, () => {
     console.log('Server started on port 3000');
@@ -423,4 +407,4 @@ app.listen(3000, () => {
 
 app.get('*', (req, res) => {            
     res.status(404).render('404', { url: req.originalUrl });
-   });
+});
