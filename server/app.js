@@ -10,8 +10,11 @@ require('dotenv').config({
 }); // This points to the .env in the root folder
 
 // setup for .env file for base Url for mongodb
-const uri = process.env.MONGODB_URI;
-const key = process.env.SECURE_KEY;
+const uri = "mongodb://localhost:27017/";
+const key = "6UfZN0VdbW9A9U2ioUtHVRVjmYOPoMTA";
+
+console.log('MongoDB URI:', uri);
+
 
 app.use(session({
     secret: key, // Replace with a secure key
@@ -33,14 +36,15 @@ const client = new MongoClient(uri, {
 });
 
 // Define the database and collection
-const dbName = 'NetworksDbMain';
+const dbName = 'myDB';  //project requirement
+const collectionName = 'myCollection';
 let db, usersCollection;
 
 // Connect to MongoDB and get the users collection
 async function connectDb() {
     await client.connect();
     db = client.db(dbName);
-    usersCollection = db.collection('Users');
+    usersCollection = db.collection(collectionName);
 }
 
 // Setup Express middleware to parse JSON request bodies
@@ -86,11 +90,14 @@ app.get('*', (req, res) => {
 //POST METHODS
 // Login Route (POST method to check credentials)
 app.post(['/', '/login'], async (req, res) => {
-    const {username, password} = req.body;
+    const { username, password } = req.body;
     let allowLogin = false;
-    console.log(username)
+
+    console.log("Username:", username);
+    console.log("Password:", password);
+
     if (!username || !password) {
-        return res.status(400).json({error: "Username and password are required."});
+        return res.status(400).json({ error: "Username and password are required." });
     }
 
     if (username === 'admin' && password === 'admin') {
@@ -99,76 +106,75 @@ app.post(['/', '/login'], async (req, res) => {
 
     try {
         await connectDb();
+
         if (!allowLogin) {
             // Check if the user exists in the database
-            const user = await usersCollection.findOne({
-                username
-            });
+            const user = await usersCollection.findOne({ username });
+            console.log("User from database:", user);
 
             if (!user) {
-                return res.status(401).json({error: "User does not exist"});
+                return res.status(401).json({ error: "User does not exist" });
             }
 
             // Compare the entered password with the stored hashed password
-            const isMatch = await bcrypt.compare(password, user.password);
+            const isMatch = await bcrypt.compare(password, user.passwordHash); // Use 'passwordHash'
 
             if (!isMatch) {
-                return res.status(401).json({error: "Invalid credentials."});
+                return res.status(401).json({ error: "Invalid credentials." });
             }
 
             // Store user information in the session
-            req.session.user = {
-                username: user.username
-            };
+            req.session.user = { username: user.username };
 
-            return res.status(200).json({ message: "Login successful!"});  // Only one response here
+            return res.status(200).json({ message: "Login successful!" }); // Only one response here
         }
-        
-        // If allowLogin is true (admin login)
-        req.session.user = {
-            username: 'admin'
-        };
 
-        return res.status(200).json({ message: "Login successful!"});  // Only one response here
+        // If allowLogin is true (admin login)
+        req.session.user = { username: 'admin' };
+
+        return res.status(200).json({ message: "Login successful!" }); // Only one response here
     } catch (err) {
         console.error(err);
-        return res.status(500).json({error: "Error logging in."});
+        return res.status(500).json({ error: "Error logging in." });
     }
 });
 
 app.post('/registration', async (req, res) => {
-    const {
-        username,
-        password
-    } = req.body;
+    const { username, password } = req.body;
+
     if (!username || !password) {
-        return res.status(400).json({error: "Username and password are required."});
-    }
-    await connectDb();
-    
-    const user = await usersCollection.findOne({
-        username
-    });
-    if (user) {
-        return res.status(401).json({error: "User Name is already taken please choose another one"});
+        return res.status(400).json({ error: "Username and password are required." });
     }
 
     try {
+        await connectDb();
+
+        // Check if the username is already taken
+        const user = await usersCollection.findOne({ username, type: "user" });
+        if (user) {
+            return res.status(401).json({ error: "Username is already taken. Please choose another one." });
+        }
+
         // Hash the password
         const hashedPassword = await bcrypt.hash(password, saltRounds);
 
         // Save the user to the database
         const newUser = {
+            type: "user", // Discriminator field
             username,
-            password: hashedPassword
+            passwordHash: hashedPassword, // Correct field name for hashed password
+            wantToGoList: [] // Initialize with an empty list
         };
+
         const result = await usersCollection.insertOne(newUser);
-        res.status(201).json({message: "User registered successfully!"});
+
+        res.status(201).json({ message: "User registered successfully!" });
     } catch (err) {
         console.error(err);
-        res.status(500).json({error: "Error registering user."});
+        res.status(500).json({ error: "Error registering user." });
     }
 });
+
 
 
 // Start the server on the port you need , specifically 3000 for simplicity
