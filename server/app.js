@@ -175,7 +175,32 @@ app.post('/registration', async (req, res) => {
     }
 });
 
+app.post('/search', async(req,res)=>{
+    const {searchKey} = req.body;
+    if (!searchKey )         
+        return res.status(400).json({ error: "Username and password are required." });
+    try{
+        await connectDb();
 
+        // searching for destinations
+        const destinations = await usersCollection.find({
+            type: "destination", // Only search destination documents
+            name: { $regex: searchKey, $options: "i" } // Case-insensitive substring search
+        }).toArray();
+
+        if (destinations.length === 0){
+            return res.status(400).json({ error: "No matching destinations found" });
+
+        }
+
+        res.status(200).json({ destinations });
+    }
+    catch{
+        console.error("Error searching destinations:", err);
+        res.status(500).json({ error: "Error searching destinations." });
+    }
+
+});
 
 // Start the server on the port you need , specifically 3000 for simplicity
 app.listen(3000, () => {
