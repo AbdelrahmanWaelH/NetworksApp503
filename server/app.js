@@ -12,8 +12,14 @@ app.set('case sensitive routing', false);
 
 
 // setup for .env file for base Url for mongodb
-const uri = "mongodb://localhost:27017/";
-const key = "6UfZN0VdbW9A9U2ioUtHVRVjmYOPoMTA";
+
+
+// const uri2 = "mongodb://localhost:27017/";
+// const key2 = "6UfZN0VdbW9A9U2ioUtHVRVjmYOPoMTA";
+
+const uri = process.env.MONGODB_URI;
+const key = process.env.SECURE_KEY;
+
 
 const destinationPages = {
     "Bali": "bali.ejs",
@@ -346,6 +352,11 @@ app.get('/hiking', async (req, res) => {
 
 
 
+
+
+
+
+
 app.listen(3000, () => {
     console.log('Server started on port 3000');
 });
@@ -414,6 +425,6 @@ app.listen(3000, () => {
 */
 
 
-app.get('*', (req, res) => {
+app.get('*', (req, res) => {            
     res.status(404).render('404', { url: req.originalUrl });
    });
