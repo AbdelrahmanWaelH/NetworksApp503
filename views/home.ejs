@@ -39,6 +39,26 @@
     margin-top: 50px; /* Add spacing from the destinations */
 }
 
+.card {
+    background-color: #2b2b2b; /* Matches the dark theme */
+    border: 1px solid #444;
+}
+
+.card-title {
+    font-size: 1.25rem;
+    font-weight: bold;
+    color: #bfff9f; /* Light green for titles */
+}
+
+.card-text {
+    color: #ddd; /* Light gray for descriptions */
+}
+
+.card-img-top {
+    height: 200px;
+    object-fit: cover; /* Ensures uniform image size */
+}
+
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -58,8 +78,8 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto">
             </ul>
-            <form method="POST" action='/search' class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2" name="Search" type="search" placeholder="Search"
+            <form method="POST" id='searchForm' action='/search' class="form-inline my-2 my-lg-0">
+                <input class="form-control mr-sm-2" name="searchKey" type="search" placeholder="Search"
                     aria-label="Search">
                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
             </form>
@@ -98,5 +118,54 @@
         </button>
     </div>
     
+    <div id="results" class="container mt-4">
+        <h3 class="text-white">Search Results:</h3>
+        <div id="search-results" class="row">
+            <!-- Search results will be appended here -->
+        </div>
+    </div>
+
+
+<script>
+   const form = document.querySelector("form");
+form.addEventListener("submit", async (e) => {
+    e.preventDefault();
+
+    const searchKey = form.searchKey.value;
+    const response = await fetch('/search', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ searchKey })
+    });
+
+    const data = await response.json();
+
+    const resultsContainer = document.getElementById("search-results");
+    resultsContainer.innerHTML = ""; // Clear previous results
+
+    if (response.ok) {
+        data.destinations.forEach(destination => {
+            const card = `
+                <div class="col-md-4 mb-3">
+                    <div class="card bg-dark text-white">
+                        <img src="${destination.name.toLowerCase()}.png" class="card-img-top" alt="${destination.name}">
+                        <div class="card-body">
+                            <h5 class="card-title">${destination.name}</h5>
+                            <p class="card-text">${destination.description}</p>
+                            <form method="POST" id='searchForm' action='/${destination.name}' class="form-inline my-2 my-lg-0">
+                                <button class="btn btn-outline-success my-2 my-sm-0" type="submit">find more about ${destination.name}</button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            `;
+            resultsContainer.insertAdjacentHTML("beforeend", card);
+        });
+    } else {
+        resultsContainer.innerHTML = `<p class="text-danger">${data.error || data.message}</p>`;
+    }
+});
+
+</script>
 </body>
 </html>
