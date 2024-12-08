@@ -213,42 +213,8 @@ app.post('/search', async(req,res)=>{
 });
 
 
-// for (destinationName in destinationPages) {
-//     app.post(`/${destinationName}`, async(req, res)=>{      //method used is POST because GET wouldnt work for some reason
-//         if (!req.session.user) {
-//             return res.redirect('/login'); // Redirect to login if no session user
-//         }
-//  try {
-//         // Connect to the database
-//         await connectDb();
-
-//         // Fetch destination data from the database
-//         const destination = await usersCollection.findOne({
-//             type: "destination",
-//             name: destinationName.toLowerCase()
-//         });
-
-//         if (!destination) {
-//             return res.status(404).render('404', { url: req.originalUrl });
-//         }
-
-//         // Render the destination page with dynamic data
-//         res.render(destination.template, {
-//             videoUrl: destination.videoUrl,
-//             description: destination.description,
-//             image: destination.image,
-//             name: destination.name
-//         });
-//     } catch (err) {
-//         console.error("Error fetching destination:", err);
-//         res.status(500).send("Error loading the page.");
-//     }    });
-// }
-
-// Start the server on the port you need , specifically 3000 for simplicity
-
 for (let destinationName in destinationPages) {
-    app.post(`/${destinationName}`, async (req, res) => {
+    app.get(`/${destinationName}`, async (req, res) => {
         if (!req.session.user) {
             return res.redirect('/login'); // Redirect to login if no session user
         }
