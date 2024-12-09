@@ -352,7 +352,7 @@ app.post('/add-to-want-to-go', async (req, res) => {
     const { destinationName } = req.body;
     console.log(`add to list has been clicked for ${destinationName}`); 
     if (!req.session.user) {
-        return res.status(401).json({ error: "User not logged in." });
+        return res.redirect('/login'); // Redirect to login if no session user
     }
 
     try {
@@ -384,7 +384,23 @@ app.post('/add-to-want-to-go', async (req, res) => {
 });
 
 
+app.get('/wanttogo', async (req, res)=>{
+    if (!req.session.user) {
+        return res.status(401).json({ error: "User not logged in." });
+    }
+    const username = session.user.username;
+    const user = await usersCollection.findOne({ username: req.session.user.username });
+    console.log(user);
 
+    const destinations = await usersCollection.find({
+        username: user.username,
+        destinationType:type  // Match the type, e.g., "islands", "hiking"
+
+    }).toArray();
+
+    res.render('wanttogo.ejs');
+
+});
 
 
 app.listen(3000, () => {
