@@ -122,7 +122,6 @@ app.post(['/', '/login'], async (req, res) => {
         if (!allowLogin) {
             // Check if the user exists in the database
             const user = await usersCollection.findOne({ username });
-            console.log("User from database:", user);
 
             if (!user) {
                 return res.status(401).json({ error: "User does not exist" });
@@ -386,20 +385,45 @@ app.post('/add-to-want-to-go', async (req, res) => {
 
 app.get('/wanttogo', async (req, res)=>{
     if (!req.session.user) {
-        return res.status(401).json({ error: "User not logged in." });
+        return res.redirect('/login'); // Redirect to login if no session user
     }
-    const username = session.user.username;
-    const user = await usersCollection.findOne({ username: req.session.user.username });
-    console.log(user);
+    
+    const username1 = req.session.user.username;
+    
+    try{
+        await connectDb();
 
-    const destinations = await usersCollection.find({
-        username: user.username,
-        destinationType:type  // Match the type, e.g., "islands", "hiking"
+        const user = await usersCollection.findOne(
+            { username: username1 }, // Filter
+            { projection: { wantToGoList: 1 } } // Projection
+        );
 
-    }).toArray();
+        console.log("User Document:", user);        
 
-    res.render('wanttogo.ejs');
+        const destinations = await usersCollection.find(
+            { name: { $in: user.wantToGoList } }
+        ).toArray();
+    
+        console.log("destinations: ", destinations);
 
+        if (!user) {
+            console.error(`No user found with username: ${username1}`);
+            // Handle the absence of the user as needed
+            return;
+        }
+        
+        const { wantToGoList } = user; 
+        
+        if (!wantToGoList || !Array.isArray(wantToGoList) || wantToGoList.length === 0) {
+            console.error("wantToGoList is empty or not an array.");
+            // Handle the empty list as needed
+            return;
+        }
+        res.status(200).json({ destinations });
+    
+    }catch{
+        return res.status(500).json({ error: "internal server error when fetching wanttogo list" });   
+    }
 });
 
 

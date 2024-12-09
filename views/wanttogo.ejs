@@ -13,6 +13,46 @@
             text-align: center;
             -webkit-text-stroke: 1px blue;
         }
+
+        .card-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .card {
+            margin: 10px;
+            width: 18rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .card img {
+            height: 200px;
+            object-fit: cover;
+        }
+
+        .card-body {
+            padding: 15px;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: bold;
+        }
+
+        .card-text {
+            font-size: 1rem;
+            margin: 10px 0;
+        }
+
+        .btn {
+            display: block;
+            width: 100%;
+            text-align: center;
+        }
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -39,6 +79,22 @@
         </div>
     </nav>
 
-    
+    <h1>Destinations</h1>
+    <div class="card-container">
+        <% destinations.forEach(destination => { %>
+            <div class="card">
+                <img src="<%= destination.image %>" class="card-img-top" alt="<%= destination.name %>">
+                <div class="card-body">
+                    <h5 class="card-title"><%= destination.name %></h5>
+                    <p class="card-text"><%= destination.description %></p>
+                    <button onclick="location.href='/<%= destination.name %>';" class="btn btn-secondary">View</button>
+                </div>
+            </div>
+        <% }) %>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.slim.min.js" integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js" integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGaZDqwOg6Kr5gV6M7027MwRPh" crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js" integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIyVay1kMZrj9NOQs7t27z2xmE+kk/33p+jF52AR" crossorigin="anonymous"></script>
 </body>
 </html>

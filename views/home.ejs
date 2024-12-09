@@ -114,13 +114,20 @@
         </div>
     </div>
     <div class="wanttogo">
-        <button onclick="location.href = '/wanttogo';" id="wanttogo" class="btn btn-secondary" style="width: 300px;">
+        <button id="wanttogo" class="btn btn-secondary" style="width: 300px;">
             Want-to-Go List
         </button>
     </div>
+
+    <div id="wanttogoList" class="container mt-4">
+        <h3 class="text-white"></h3>
+        <div id="wanttogolist-results" class="row">
+            <!-- Search results will be appended here -->
+        </div>
+    </div>
     
     <div id="results" class="container mt-4">
-        <h3 class="text-white">Search Results:</h3>
+        <h3 class="text-white"></h3>
         <div id="search-results" class="row">
             <!-- Search results will be appended here -->
         </div>
@@ -128,8 +135,71 @@
 
 
 <script>
+
+   // Select the "wanttogo" button and add a click event listener
+document.querySelector("#wanttogo").addEventListener("click", async (e) => {
+    e.preventDefault(); // Prevent the default button behavior (e.g., form submission)
+
+    try {
+        // Make a GET request to the '/wanttogo' endpoint
+        const response = await fetch('/wanttogo', {
+            method: 'GET',
+            headers: { 'Content-Type': 'application/json' },
+        });
+
+        // Parse the JSON response
+        const data = await response.json();
+        console.log(data);
+
+        // Select the container where the results will be displayed
+        const resultsContainer = document.getElementById("wanttogolist-results");
+
+        // Clear any previous results to avoid duplication
+        resultsContainer.innerHTML = '';
+
+        if (response.ok) {
+            // Check if 'destinations' exist in the response
+            if (data.destinations && Array.isArray(data.destinations)) {
+                // Iterate over each destination and create a card
+                data.destinations.forEach(destination => {
+                    const card = `
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-dark text-white h-100">
+                                <img src="${destination.name.toLowerCase()}.png" class="card-img-top" alt="${destination.name}">
+                                <div class="card-body d-flex flex-column">
+                                    <h5 class="card-title">${destination.name}</h5>
+                                    <p class="card-text">${destination.description}</p>
+                                    <div class="mt-auto">
+                                        <form method="GET" action="/${encodeURIComponent(destination.name)}" class="form-inline my-2 my-lg-0 mb-2">
+                                            <button class="btn btn-outline-success btn-block" type="submit">Find More About ${destination.name}</button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    // Insert the card into the results container
+                    resultsContainer.insertAdjacentHTML("beforeend", card);
+                });
+            } else {
+                // Handle the case where 'destinations' is empty or not an array
+                resultsContainer.innerHTML = `<p>No destinations found in your Want-to-Go List.</p>`;
+            }
+        } else {
+            // Handle non-OK HTTP responses
+            resultsContainer.innerHTML = `<p>Error: ${data.message || 'Failed to load destinations.'}</p>`;
+        }
+    } catch (error) {
+        // Handle any errors that occurred during the fetch operation
+        console.error("Error fetching destinations:", error);
+        const resultsContainer = document.getElementById("wanttogolist-results");
+        resultsContainer.innerHTML = `<p>Error: ${error.message}</p>`;
+    }
+});
+
+
    const form = document.querySelector("form");
-form.addEventListener("submit", async (e) => {
+    form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const searchKey = form.searchKey.value;
@@ -145,6 +215,8 @@ form.addEventListener("submit", async (e) => {
     resultsContainer.innerHTML = ""; // Clear previous results
 
     if (response.ok) {
+        document.querySelector('#results > h3:first-child').innerHTML = 'Search Results:';
+
         data.destinations.forEach(destination => {
             const card = `
                 <div class="col-md-4 mb-3">
@@ -168,6 +240,7 @@ form.addEventListener("submit", async (e) => {
             resultsContainer.insertAdjacentHTML("beforeend", card);
         });
     } else {
+        document.querySelector('#results > h3:first-child').innerHTML = '';
         resultsContainer.innerHTML = `<p class="text-danger">${data.error || data.message}</p>`;
     }
 });
@@ -179,6 +252,9 @@ document.querySelectorAll('.view-destination').forEach(button => {
         window.location.href = `/${destination}`; // Navigate using GET
     });
 });
+
+
+
 
 
 </script>
