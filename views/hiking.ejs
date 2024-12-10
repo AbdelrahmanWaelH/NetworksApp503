@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title><%= type.charAt(0).toUpperCase() + type.slice(1) %> Destinations</title>
+    <title>Hiking Destinations</title>
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
         integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <style>
@@ -31,6 +31,9 @@
             background-color: rgba(0, 0, 0, 0.7);
             color: white;
         }
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -43,7 +46,7 @@
         <div class="collapse navbar-collapse" id="navbarSupportedContent">
             <ul class="navbar-nav mr-auto"></ul>
             <form method="POST" action='/search' class="form-inline my-2 my-lg-0">
-                <input class="form-control mr-sm-2" name="Search" type="search" placeholder="Search"
+                <input class="form-control mr-sm-2" name="searchKey" type="search" placeholder="Search"
                     aria-label="Search">
                 <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Search</button>
             </form>
@@ -62,5 +65,53 @@
             </div>
         <% }) %>
     </div>
+    <div id="results" class="container mt-4 hidden">
+        <h3 class="text-white">Search Results:</h3>
+        <div id="search-results" class="row">
+            <!-- Search results will be appended here -->
+        </div>
+    </div>
+
+    <script>
+        const form = document.querySelector("form");
+        form.addEventListener("submit", async (e) => {
+            e.preventDefault();
+
+            const searchKey = form.searchKey.value;
+            const response = await fetch('/search', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ searchKey })
+            });
+
+            const data = await response.json();
+
+            const resultsContainer = document.getElementById("search-results");
+            resultsContainer.innerHTML = ""; // Clear previous results
+
+            if (response.ok) {
+                data.destinations.forEach(destination => {
+                    const card = `
+                        <div class="col-md-4 mb-3">
+                            <div class="card bg-dark text-white">
+                                <img src="${destination.image}" class="card-img-top" alt="${destination.name}">
+                                <div class="card-body">
+                                    <h5 class="card-title">${destination.name}</h5>
+                                    <p class="card-text">${destination.description}</p>
+                                    <button onclick="location.href='/${destination.name}';" class="btn btn-secondary">View</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    resultsContainer.insertAdjacentHTML("beforeend", card);
+                });
+
+                // Show the results container
+                document.getElementById("results").classList.remove("hidden");
+            } else {
+                resultsContainer.innerHTML = `<p class="text-danger">${data.error || 'Search failed.'}</p>`;
+            }
+        });
+    </script>
 </body>
 </html>
