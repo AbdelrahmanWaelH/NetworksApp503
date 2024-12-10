@@ -10,10 +10,10 @@
     },
     {
       "type": "destination",
-      "name": "Roma",
-      "template": "roma.ejs",
+      "name": "Rome",
+      "template": "rome.ejs",
       "description": "The Eternal City, known for its ancient ruins like the Colosseum and rich cultural heritage.",
-      "image": "/roma.png",
+      "image": "/rome.png",
       "videoUrl": "https://www.youtube.com/embed/hNaQ8jq_3zM",
       "destinationType": "City"
     },
