@@ -176,30 +176,6 @@ app.post('/registration', async (req, res) => {
     }
 });
 
-app.post('/search', async(req,res)=>{
-    const {searchKey} = req.body;
-    if (!searchKey )         
-        return res.status(400).json({ error: "Search key is required." });
-    try{
-        await connectDb();
-
-        // searching for destinations
-        const destinations = await usersCollection.find({
-            type: "destination", // Only search destination documents
-            name: { $regex: searchKey, $options: "i" } // Case-insensitive substring search
-        }).toArray();
-
-        if (destinations.length === 0){
-            return res.status(400).json({ error: "No matching destinations found" });
-        }
-        res.status(200).json({ destinations });
-    }
-    catch{
-        console.error("Error searching destinations:", err);
-        res.status(500).json({ error: "Error searching destinations." });
-    }
-});
-
 
 // Path to the JSON file
 const destinationsFilePath = path.join(__dirname, 'destinations.json');
@@ -270,10 +246,6 @@ app.get('/cities', (req, res) => handleDestinationRoute(req, res, "City", "Citie
 app.get('/islands', (req, res) => handleDestinationRoute(req, res, "Island", "Islands"));
 app.get('/hiking', (req, res) => handleDestinationRoute(req, res, "Hiking", "Hiking"));
 
-
-
-
-
 app.post('/add-to-want-to-go', async (req, res) => {
     const { destinationName } = req.body;
     console.log(`add to list has been clicked for ${destinationName}`); 
@@ -310,14 +282,57 @@ app.post('/add-to-want-to-go', async (req, res) => {
 });
 
 
-app.get('/wanttogo', async (req, res)=>{
+
+app.post('/search', async (req, res) => {
+    if (!req.session.user) {
+        return res.redirect('/login'); // Redirect to login if no session user
+    }
+
+    const { searchKey } = req.body;
+
+    if (!searchKey) {
+        return res.status(400).redirect('/searchresults?error=Search+key+is+required');
+    }
+
+    try {
+        const data = destinationsInFile.filter(item =>
+            item.type === "destination" &&
+            item.name.toLowerCase().includes(searchKey.toLowerCase())
+        );
+
+        if (data.length === 0) {
+            return res.status(400).redirect('/searchresults?error=No+matching+destinations+found');
+        }
+
+        // Store results in session (or another mechanism)
+        req.session.searchResults = data;
+
+        // Redirect to the search results page
+        res.redirect('/searchresults');
+    } catch (err) {
+        console.error("Error searching destinations:", err);
+        res.status(500).redirect('/searchresults?error=Error+searching+destinations');
+    }
+});
+
+app.get('/searchresults', (req, res) => {
+    const results = req.session.searchResults || [];
+    const error = req.query.error || null;
+
+    // Clear search results from session (optional)
+    req.session.searchResults = null;
+
+    res.render('searchresults', { results, error });
+});
+
+app.get('/wanttogo', async (req, res) => {
     if (!req.session.user) {
         return res.redirect('/login'); // Redirect to login if no session user
     }
     
     const username1 = req.session.user.username;
     
-    try{
+    try {
         await connectDb();
 
         const user = await usersCollection.findOne(
@@ -327,26 +342,29 @@ app.get('/wanttogo', async (req, res)=>{
 
         if (!user) {
             console.error(`No user found with username: ${username1}`);
-            return;
+            return res.status(404).render('wanttogo', { error: 'User not found' });
         }
 
         console.log("User Document:", user);        
 
-        //destination-names stored in the database
+        // Destination names stored in the database
         const destinations = user.wantToGoList;
             
         if (!destinations || !Array.isArray(destinations) || destinations.length === 0) {
             console.error("wantToGoList is empty or not an array.");
             // Handle the empty list as needed
-            res.status(400).json({ message: "No destinations yet , please add some destinations to your want to go list " });
-            return;
+            return res.status(400).render('wanttogo', { error: "No destinations yet. Please add some destinations to your want-to-go list." });
         }
+
         const data = destinationsInFile.filter(item => 
             item.type === "destination" && destinations.includes(item.name)
         );
-        res.status(200).json({ data });
-    }catch{
-        return res.status(500).json({ error: "internal server error when fetching wanttogo list" });   
+
+        res.render('wanttogo', { results: data, error:null });
+        
+    } catch (err) {
+        console.error("Error fetching want-to-go list:", err);
+        return res.status(500).render('wanttogo', { error: "Internal server error when fetching want-to-go list" });
     }
 });
 
