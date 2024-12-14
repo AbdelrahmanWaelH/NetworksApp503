@@ -88,45 +88,5 @@
             <!-- Search results will be appended here -->
         </div>
     </div>
-
-    <script>
-        const form = document.querySelector("form");
-        form.addEventListener("submit", async (e) => {
-            e.preventDefault();
-
-            const searchKey = form.searchKey.value;
-            const response = await fetch('/search', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ searchKey })
-            });
-
-            const data = await response.json();
-
-            const resultsContainer = document.getElementById("search-results");
-            resultsContainer.innerHTML = ""; // Clear previous results
-
-            if (response.ok) {
-                data.destinations.forEach(destination => {
-                    const card = `
-                        <div class="col-md-4 mb-3">
-                            <div class="card bg-dark text-white">
-                                <img src="${destination.image}" class="card-img-top" alt="${destination.name}">
-                                <div class="card-body">
-                                    <h5 class="card-title">${destination.name}</h5>
-                                    <p class="card-text">${destination.description}</p>
-                                    <button onclick="location.href='/${destination.name}';" class="btn btn-secondary">View</button>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    resultsContainer.insertAdjacentHTML("beforeend", card);
-                });
-                document.getElementById("results").classList.remove("hidden");
-            } else {
-                resultsContainer.innerHTML = `<p class="text-danger">${data.error || 'Search failed.'}</p>`;
-            }
-        });
-    </script>
 </body>
 </html>
