@@ -220,6 +220,7 @@ app.post("/search", async (req, res) => {
 
 // Search Results Page
 app.get("/searchresults", (req, res) => {
+  if (!req.session.user) return res.redirect("/login");
   const results = req.session.searchResults || [];
   const error = req.query.error || null;
   req.session.searchResults = null; // Clear search results from session
