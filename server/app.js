@@ -1,7 +1,8 @@
 const express = require('express')
 const app = express()
 const path = require('path');
-const {MongoClient,ServerApiVersion} = require('mongodb');
+const fs = require('fs');
+const {MongoClient} = require('mongodb');
 const bcrypt = require('bcrypt'); // Used for password hashing
 const saltRounds = 10; //any number , we could fix it as 10 for simplicity
 const session = require('express-session');
@@ -9,13 +10,7 @@ require('dotenv').config({
     path: '../.env'
 }); // This points to the .env in the root folder
 app.set('case sensitive routing', false);
-
-
-// setup for .env file for base Url for mongodb
-
-
-const uri = "mongodb://localhost:27017/";
-const key = "6UfZN0VdbW9A9U2ioUtHVRVjmYOPoMTA";
+const key = "eyJvaWRjUGx1Z2luU3RhdGVWZXJzaW9uIjowLCJzdGF0ZSI6W119";
 
 const destinationPages = {
     "Bali": "bali.ejs",
@@ -25,9 +20,6 @@ const destinationPages = {
     "Rome": "rome.ejs",
     "Santorini": "santorini.ejs"
 };
-
-
-console.log('MongoDB URI:', uri);
 
 
 app.use(session({
@@ -41,24 +33,22 @@ app.use(session({
 
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
-const client = new MongoClient(uri, {
-    serverApi: {
-        version: ServerApiVersion.v1,
-        strict: true,
-        deprecationErrors: true,
-    }
-});
-
-// Define the database and collection
+const uri = "mongodb://127.0.0.1:27017";
+const client = new MongoClient(uri);
 const dbName = 'myDB';  //project requirement
 const collectionName = 'myCollection';
 let db, usersCollection;
 
 // Connect to MongoDB and get the users collection
 async function connectDb() {
-    await client.connect();
-    db = client.db(dbName);
-    usersCollection = db.collection(collectionName);
+    try {
+        await client.connect();
+        console.log('Connected to MongoDB');
+        db = client.db(dbName); // Access the database
+        usersCollection = db.collection(collectionName); // Get the collection
+    } catch (error) {
+        console.error('Error connecting to MongoDB:', error);
+    }
 }
 
 // Setup Express middleware to parse JSON request bodies
@@ -201,48 +191,43 @@ app.post('/search', async(req,res)=>{
 
         if (destinations.length === 0){
             return res.status(400).json({ error: "No matching destinations found" });
-
         }
-
         res.status(200).json({ destinations });
     }
     catch{
         console.error("Error searching destinations:", err);
         res.status(500).json({ error: "Error searching destinations." });
     }
-
 });
 
 
-for (let destinationName in destinationPages) {
-    app.get(`/${destinationName}`, async (req, res) => {
+// Path to the JSON file
+const destinationsFilePath = path.join(__dirname, 'destinations.json');
+
+// Load destinations from the JSON file
+let destinationsInFile = [];
+try {
+    const data = fs.readFileSync(destinationsFilePath, 'utf-8');
+    destinationsInFile = JSON.parse(data);
+} catch (err) {
+    console.error("Error reading destinations JSON file:", err);
+    process.exit(1); // Exit the process if the file can't be read
+}
+
+// Dynamically create routes for each destination
+destinationsInFile.forEach(destination => {
+    app.get(`/${destination.name}`, async (req, res) => {
         if (!req.session.user) {
             return res.redirect('/login'); // Redirect to login if no session user
         }
         try {
-            console.log("Requested destination:", destinationName);
-
-            // Connect to the database
-            await connectDb();
-
-            // Query the database
-            const destination = await usersCollection.findOne({
-                type: "destination",
-                name: destinationName // Normalize to lowercase
-            });
-
-            console.log("Query result:", destination);
-
-            if (!destination) {
-                return res.status(404).render('404', { url: req.originalUrl });
-            }
+            console.log("Requested destination:", destination.name);
 
             if (!destination.template) {
-                console.error("Missing template for destination:", destinationName);
+                console.error("Missing template for destination:", destination.name);
                 return res.status(500).send("Template not defined for this destination.");
             }
 
-            // Render the EJS template with dynamic data
             res.render(destination.template, {
                 videoUrl: destination.videoUrl,
                 description: destination.description,
@@ -254,95 +239,37 @@ for (let destinationName in destinationPages) {
             res.status(500).send("Error loading the page.");
         }
     });
+});
+
+
+async function handleDestinationRoute(req, res, type, template) {
+    if (!req.session.user) {
+        return res.redirect('/login'); // Redirect to login if no session user
+    }
+
+    try {
+        // Fetch destinations of the given type
+        const destinations = destinationsInFile.filter(item => 
+            item.type === "destination" && item.destinationType === type
+        );
+
+        if (destinations.length === 0) {
+            return res.status(404).send(`No destinations found for ${type}.`);
+        }
+
+        // Render the EJS template with the fetched data
+        res.render(template, { destinations, type });
+    } catch (err) {
+        console.error(`Error fetching destinations for ${type}:`, err);
+        res.status(500).send("Error loading destinations.");
+    }
 }
 
+// Routes
+app.get('/cities', (req, res) => handleDestinationRoute(req, res, "City", "Cities"));
+app.get('/islands', (req, res) => handleDestinationRoute(req, res, "Island", "Islands"));
+app.get('/hiking', (req, res) => handleDestinationRoute(req, res, "Hiking", "Hiking"));
 
-app.get('/cities', async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login'); // Redirect to login if no session user
-    }
-
-    try {
-        await connectDb();
-
-        const type = "City"
-        // Fetch destinations of the given type
-        const destinations = await usersCollection.find({
-            type: "destination",
-            destinationType:type  // Match the type, e.g., "islands", "hiking"
-        }).toArray();
-
-        if (destinations.length === 0) {
-            return res.status(404).send("No destinations found for this type.");
-        }
-
-        // Render the EJS template with the fetched data
-        res.render('Cities', { destinations, type });
-    } catch (err) {
-        console.error("Error fetching destinations:", err);
-        res.status(500).send("Error loading destinations.");
-    }
-});
-
-
-
-
-app.get('/islands', async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login'); // Redirect to login if no session user
-    }
-
-    try {
-        await connectDb();
-
-        const type = "Island"
-        // Fetch destinations of the given type
-        const destinations = await usersCollection.find({
-            type: "destination",
-            destinationType:type  // Match the type, e.g., "islands", "hiking"
-        }).toArray();
-
-        if (destinations.length === 0) {
-            return res.status(404).send("No destinations found for this type.");
-        }
-
-        // Render the EJS template with the fetched data
-        res.render('Islands', { destinations, type });
-    } catch (err) {
-        console.error("Error fetching destinations:", err);
-        res.status(500).send("Error loading destinations.");
-    }
-});
-
-
-
-
-app.get('/hiking', async (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/login'); // Redirect to login if no session user
-    }
-
-    try {
-        await connectDb();
-
-        const type = "Hiking"
-        // Fetch destinations of the given type
-        const destinations = await usersCollection.find({
-            type: "destination",
-            destinationType:type  // Match the type, e.g., "islands", "hiking"
-        }).toArray();
-
-        if (destinations.length === 0) {
-            return res.status(404).send("No destinations found for this type.");
-        }
-
-        // Render the EJS template with the fetched data
-        res.render('Hiking', { destinations, type });
-    } catch (err) {
-        console.error("Error fetching destinations:", err);
-        res.status(500).send("Error loading destinations.");
-    }
-});
 
 
 
@@ -398,29 +325,26 @@ app.get('/wanttogo', async (req, res)=>{
             { projection: { wantToGoList: 1 } } // Projection
         );
 
-        console.log("User Document:", user);        
-
-        const destinations = await usersCollection.find(
-            { name: { $in: user.wantToGoList } }
-        ).toArray();
-    
-        console.log("destinations: ", destinations);
-
         if (!user) {
             console.error(`No user found with username: ${username1}`);
-            // Handle the absence of the user as needed
             return;
         }
-        
-        const { wantToGoList } = user; 
-        
-        if (!wantToGoList || !Array.isArray(wantToGoList) || wantToGoList.length === 0) {
+
+        console.log("User Document:", user);        
+
+        //destination-names stored in the database
+        const destinations = user.wantToGoList;
+            
+        if (!destinations || !Array.isArray(destinations) || destinations.length === 0) {
             console.error("wantToGoList is empty or not an array.");
             // Handle the empty list as needed
+            res.status(400).json({ message: "No destinations yet , please add some destinations to your want to go list " });
             return;
         }
-        res.status(200).json({ destinations });
-    
+        const data = destinationsInFile.filter(item => 
+            item.type === "destination" && destinations.includes(item.name)
+        );
+        res.status(200).json({ data });
     }catch{
         return res.status(500).json({ error: "internal server error when fetching wanttogo list" });   
     }
@@ -432,69 +356,6 @@ app.listen(3000, () => {
 });
 
 
-//database data:
-/* 
-[
-  {
-    "type": "destination",
-    "name": "Santorini",
-    "template": "santorini.ejs",
-    "description": "A Greek island famous for its whitewashed buildings, blue domes, and stunning sunsets.",
-    "image": "/santorini.png",
-    "videoUrl": "https://www.youtube.com/embed/4zAEDLwl9HI",
-    "destinationType": "Island"
-  },
-  {
-    "type": "destination",
-    "name": "Roma",
-    "template": "roma.ejs",
-    "description": "The Eternal City, known for its ancient ruins like the Colosseum and rich cultural heritage.",
-    "image": "/roma.png",
-    "videoUrl": "https://www.youtube.com/embed/hNaQ8jq_3zM",
-    "destinationType": "City"
-  },
-  {
-    "type": "destination",
-    "name": "Annapurna",
-    "template": "annapurna.ejs",
-    "description": "A breathtaking Himalayan mountain range, offering some of the world's most iconic trekking routes.",
-    "image": "/annapurna.png",
-    "videoUrl": "https://www.youtube.com/embed/qBgkuiqPK0I",
-    "destinationType": "Hiking"
-  },
-  {
-    "type": "destination",
-    "name": "Paris",
-    "template": "paris.ejs",
-    "description": "The city of lights, famous for its art, architecture, and iconic landmarks like the Eiffel Tower.",
-    "image": "/paris.png",
-    "videoUrl": "https://www.youtube.com/embed/wroGPb4-3yM",
-    "destinationType": "City"
-  },
-  {
-    "type": "destination",
-    "name": "Inca",
-    "template": "inca.ejs",
-    "description": "Home to Machu Picchu, the ancient city of the Inca Empire located in the Andes mountains.",
-    "image": "/inca.png",
-    "videoUrl": "https://www.youtube.com/embed/oZ90M55mDac",
-    "destinationType": "Hiking"
-  },
-  {
-    "type": "destination",
-    "name": "Bali",
-    "template": "bali.ejs",
-    "description": "A tropical paradise known for its lush greenery, serene beaches, and vibrant culture.",
-    "image": "/bali.png",
-    "videoUrl": "https://www.youtube.com/embed/tZIRwYeEGnc",
-    "destinationType": "Island"
-  }
-]
-
-
-*/
-
-
 app.get('*', (req, res) => {            
     res.status(404).render('404', { url: req.originalUrl });
-   });
+});

@@ -148,8 +148,7 @@ document.querySelector("#wanttogo").addEventListener("click", async (e) => {
         });
 
         // Parse the JSON response
-        const data = await response.json();
-        console.log(data);
+        const res = await response.json();
 
         // Select the container where the results will be displayed
         const resultsContainer = document.getElementById("wanttogolist-results");
@@ -159,9 +158,9 @@ document.querySelector("#wanttogo").addEventListener("click", async (e) => {
 
         if (response.ok) {
             // Check if 'destinations' exist in the response
-            if (data.destinations && Array.isArray(data.destinations)) {
+            if (res.data && Array.isArray(res.data)) {
                 // Iterate over each destination and create a card
-                data.destinations.forEach(destination => {
+                res.data.forEach(destination => {
                     const card = `
                         <div class="col-md-4 mb-3">
                             <div class="card bg-dark text-white h-100">
@@ -187,7 +186,7 @@ document.querySelector("#wanttogo").addEventListener("click", async (e) => {
             }
         } else {
             // Handle non-OK HTTP responses
-            resultsContainer.innerHTML = `<p>Error: ${data.message || 'Failed to load destinations.'}</p>`;
+            resultsContainer.innerHTML = `<p style="color: red;">Error: ${data.message || 'Failed to load destinations.'}</p>`;
         }
     } catch (error) {
         // Handle any errors that occurred during the fetch operation
